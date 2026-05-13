@@ -1,0 +1,62 @@
+.table-container {
+  overflow-x: auto;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.bottle-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 10px;
+}
+
+.bottle-table th,
+.bottle-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #ccc;
+}
+
+.bottle-table th {
+  background-color: #f3f3f3;
+  font-weight: bold;
+}
+
+/* Row colors */
+.bottle-table tr.even {
+  background-color: #ffffff;
+}
+
+.bottle-table tr.odd {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+.bottle-table tr:hover {
+  background-color: #e2e8f0; /* light gray */
+  cursor: pointer;
+}
+
+/* Selected row */
+.bottle-table tr.selected {
+  background-color: #90cdf4; /* light blue */
+}
+
+th,
+td {
+  width: px/%;
+}
+
+.bottle-table th {
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-section {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.table-section {
+  margin-top: 10px;
+}
