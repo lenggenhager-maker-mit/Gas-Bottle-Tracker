@@ -1,76 +1,88 @@
 import React, { useState } from "react";
+
 import DeleteModal from "./deleteModal";
 import AddBottle from "./addBottle";
 import UpdateFillLevel from "./updateFillLevel";
 import UpdateRec from "./updateRec";
+import UpdateVerbrauchsgas from "./updateVerbrauchsgas";
 
 const ModalBar = ({ selectedBottle, bottles }) => {
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [isUpdateRecOpen, setIsUpdateRecOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
 
-  // Delete modal handlers
-  const openModalDelete = () => {
-    if (!selectedBottle) {
+  const openModal = (modalName) => {
+    // Require selected bottle for all except add
+    if (modalName !== "add" && !selectedBottle) {
       alert("Please select a bottle.");
       return;
     }
-    setIsDeleteOpen(true);
-  };
-  const closeModalDelete = () => setIsDeleteOpen(false);
 
-  // Add modal handlers
-  const openModalAdd = () => setIsAddOpen(true);
-  const closeModalAdd = () => setIsAddOpen(false);
+    // Special handling for update bottle
+    if (modalName === "updateBottle") {
+      if (selectedBottle?.bottleType === "REC") {
+        setActiveModal("updateRec");
+        return;
+      }
 
-  // Update Fill Level modal handlers
-  const openModalUpdate = () => {
-    if (!selectedBottle) {
-      alert("Please select a bottle.");
+      if (selectedBottle?.bottleType === "GAS") {
+        setActiveModal("updateVerbrauchsgas");
+        return;
+      }
+
+      // Default update modal
+      setActiveModal("updateFill");
       return;
     }
-    setIsUpdateOpen(true);
-  };
-  const closeModalUpdate = () => setIsUpdateOpen(false);
 
-  // Update Rec modal handlers
-  const openModalUpdateRec = () => {
-    if (!selectedBottle || selectedBottle.bottleType !== "REC") {
-      alert("Please select a REC bottle");
-      return;
-    }
-    setIsUpdateRecOpen(true);
+    setActiveModal(modalName);
   };
-  const closeModalUpdateRec = () => setIsUpdateRecOpen(false);
+
+  const closeModal = () => {
+    setActiveModal(null);
+  };
 
   return (
     <div>
       {/* Add Bottle */}
-      <button onClick={openModalAdd}>Neue Flasche</button>
-      <AddBottle isOpen={isAddOpen} onClose={closeModalAdd} bottles={bottles} />
+      <button onClick={() => openModal("add")}>Neue Flasche</button>
 
       {/* Delete Bottle */}
-      <button onClick={openModalDelete}>Flasche loschen</button>
+      <button onClick={() => openModal("delete")}>Flasche löschen</button>
+
+      {/* Dynamic Update Button */}
+      <button onClick={() => openModal("updateBottle")}>Update Flasche</button>
+
+      {/* Add Bottle Modal */}
+      <AddBottle
+        isOpen={activeModal === "add"}
+        onClose={closeModal}
+        bottles={bottles}
+      />
+
+      {/* Delete Modal */}
       <DeleteModal
-        isOpen={isDeleteOpen}
-        onClose={closeModalDelete}
+        isOpen={activeModal === "delete"}
+        onClose={closeModal}
         selectedBottle={selectedBottle}
       />
 
-      {/* Update Fill Level */}
-      <button onClick={openModalUpdate}>Update Füllstand</button>
+      {/* Standard Fill Level Update */}
       <UpdateFillLevel
-        isOpen={isUpdateOpen}
-        onClose={closeModalUpdate}
+        isOpen={activeModal === "updateFill"}
+        onClose={closeModal}
         selectedBottle={selectedBottle}
       />
 
-      {/* Update Rec Bottle */}
-      <button onClick={openModalUpdateRec}>Update Rec Flasche</button>
+      {/* REC Bottle Update */}
       <UpdateRec
-        isOpen={isUpdateRecOpen}
-        onClose={closeModalUpdateRec}
+        isOpen={activeModal === "updateRec"}
+        onClose={closeModal}
+        selectedBottle={selectedBottle}
+      />
+
+      {/* Verbrauchsgas Update */}
+      <UpdateVerbrauchsgas
+        isOpen={activeModal === "updateVerbrauchsgas"}
+        onClose={closeModal}
         selectedBottle={selectedBottle}
       />
     </div>

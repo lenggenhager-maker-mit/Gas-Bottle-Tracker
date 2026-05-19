@@ -1,40 +1,42 @@
 import React, { useState, useEffect } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
+
 import GasDropdown from "../util/gasDropdown";
+
 import "./popUp.css";
 
 const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
   const [gasTyp, setGasTyp] = useState("");
   const [quality, setQuality] = useState("");
-  const [added, setAdded] = useState("");
-  const [removed, setRemoved] = useState("");
-
-  const isREC = selectedBottle?.bottleType === "REC" || false;
+  const [newFuellstand, setNewFuellstand] = useState("");
 
   useEffect(() => {
     if (isOpen && selectedBottle) {
       setGasTyp(selectedBottle.gasTyp || "");
       setQuality(selectedBottle.quality || "");
-      setAdded("");
-      setRemoved("");
+
+      // keep input empty on open
+      setNewFuellstand("");
     }
   }, [isOpen, selectedBottle]);
 
   if (!isOpen || !selectedBottle) return null;
 
-  // Handler to mark bottle as "zu entsorgen"
   const markAsEntsorgen = async () => {
     const confirm = window.confirm(
       "Diese Aktion kann nicht rückgängig gemacht werden. Wirklich auf 'zu entsorgen' setzen?"
     );
+
     if (!confirm) return;
 
     try {
       const bottleRef = doc(db, "bottles", selectedBottle.id);
-      await updateDoc(bottleRef, { quality: "entsorgen" });
 
-      // ✅ Update local state so modal reflects change without closing
+      await updateDoc(bottleRef, {
+        quality: "entsorgen",
+      });
+
       setQuality("entsorgen");
     } catch (error) {
       console.error("Fehler beim Aktualisieren der Flasche:", error);
@@ -50,21 +52,34 @@ const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
       return;
     }
 
+    const updateData = {};
+
+    // only update gasTyp if changed
+    if (gasTyp !== selectedBottle.gasTyp) {
+      updateData.gasTyp = gasTyp;
+    }
+
+    // only update fuellstand if user entered a value
+    if (
+      newFuellstand !== "" &&
+      Number(newFuellstand) !== selectedBottle.fuellstand
+    ) {
+      updateData.fuellstand = Number(newFuellstand);
+    }
+
+    // nothing changed → do nothing
+    if (Object.keys(updateData).length === 0) {
+      alert("Keine Änderungen erkannt.");
+      return;
+    }
+
     try {
       const bottleRef = doc(db, "bottles", selectedBottle.id);
 
-      const newFuellstand =
-        Number(selectedBottle.fuellstand || 0) +
-        Number(added || 0) -
-        Number(removed || 0);
-
-      await updateDoc(bottleRef, {
-        gasTyp,
-        fuellstand: newFuellstand,
-      });
+      await updateDoc(bottleRef, updateData);
 
       alert(`REC-Flasche ${selectedBottle.id} wurde aktualisiert.`);
-      onClose(); // Only close after saving changes
+      onClose();
     } catch (error) {
       console.error("❌ Error updating bottle:", error);
       alert("Fehler beim Aktualisieren der Flasche. Siehe Konsole.");
@@ -74,7 +89,15 @@ const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h3>Update REC Flasche</h3>
+        <h3>Update {selectedBottle.id}</h3>
+
+        <p>
+          Gas: {selectedBottle.gasTyp}
+          <br />
+          Grösse: {selectedBottle.bottleGrosse} kg
+          <br />
+          Aktueller Füllstand: {selectedBottle.fuellstand} kg
+        </p>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "30px" }}>
           <GasDropdown
@@ -82,10 +105,10 @@ const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
             value={gasTyp}
             onChange={(e) => setGasTyp(e.target.value)}
           />
+
           <br />
           <br />
 
-          {/* Entsorgen Button or Warning */}
           {quality !== "entsorgen" ? (
             <button
               type="button"
@@ -109,26 +132,18 @@ const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
               Flasche ist zu entsorgen ⚠️
             </span>
           )}
+
           <br />
           <br />
 
+          {/* Füllstand input with placeholder instead of prefill */}
           <input
             type="number"
-            placeholder="Menge eingefüllt (kg)"
-            value={added}
-            onChange={(e) => setAdded(e.target.value)}
-            disabled={!isREC}
-            className={!isREC ? "disabledInput" : ""}
+            placeholder="Neuer Füllstand (kg)"
+            value={newFuellstand}
+            onChange={(e) => setNewFuellstand(e.target.value)}
           />
-          <br />
-          <br />
 
-          <input
-            type="number"
-            placeholder="Menge gebraucht (kg)"
-            value={removed}
-            onChange={(e) => setRemoved(e.target.value)}
-          />
           <br />
           <br />
 
@@ -147,6 +162,7 @@ const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
           >
             Save
           </button>
+
           <br />
 
           <button
