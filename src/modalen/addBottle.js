@@ -7,6 +7,7 @@ import "./popUp.css";
 const AddBottle = ({ isOpen, onClose, bottles }) => {
   const [bottleNumber, setBottleNumber] = useState("");
   const [bottleType, setBottleType] = useState("");
+
   const [gasTyp, setGasTyp] = useState("");
   const [fuellstand, setFuellstand] = useState("");
   const [grosse, setGrosse] = useState("");
@@ -21,6 +22,16 @@ const AddBottle = ({ isOpen, onClose, bottles }) => {
     setFuellstand("");
     setStandort("");
     setQuality("");
+  };
+
+  const handleBottleTypeChange = (e) => {
+    const selectedType = e.target.value;
+
+    setBottleType(selectedType);
+
+    // Reset dependent fields when type changes
+    setGrosse("");
+    setFuellstand("");
   };
 
   const handleAddBottle = async (e) => {
@@ -50,13 +61,14 @@ const AddBottle = ({ isOpen, onClose, bottles }) => {
       };
 
       await addBottle(newBottle, bottles);
+
       alert("Data Successfully Submitted");
 
       resetForm();
       onClose();
     } catch (error) {
       console.error("Error adding bottle:", error);
-      // Show Firestore errors in a popup alert
+
       alert(
         error.message || "Failed to add bottle. Check console for details."
       );
@@ -69,62 +81,100 @@ const AddBottle = ({ isOpen, onClose, bottles }) => {
     <div className="modal-overlay">
       <div className="modal-content">
         <h3>Neue Flasche anlegen</h3>
+
         <form onSubmit={handleAddBottle} style={{ marginTop: "30px" }}>
+          {/* Bottle Type */}
           <select
             value={bottleType}
-            onChange={(e) => setBottleType(e.target.value)}
+            onChange={handleBottleTypeChange}
           >
             <option value="">Flasche Typ</option>
             <option value="KM">Kältemittel</option>
             <option value="REC">Recycling</option>
             <option value="GAS">Verbrauchsgas</option>
           </select>
+
           <br />
           <br />
 
+          {/* Bottle Number */}
           <input
             type="text"
             placeholder="Flasche Nummer"
             value={bottleNumber}
             onChange={(e) => setBottleNumber(e.target.value)}
           />
+
           <br />
           <br />
 
-          <input
-            type="number"
-            placeholder="Grösse (kg)"
-            value={grosse}
-            onChange={(e) => setGrosse(e.target.value)}
-          />
+          {/* Grösse */}
+          {bottleType === "GAS" ? (
+            <select
+              value={grosse}
+              onChange={(e) => setGrosse(e.target.value)}
+            >
+              <option value="">Grösse wählen</option>
+              <option value="10">10 L</option>
+              <option value="20">20 L</option>
+              <option value="50">50 L</option>
+            </select>
+          ) : (
+            <input
+              type="number"
+              placeholder="Grösse (kg)"
+              value={grosse}
+              onChange={(e) => setGrosse(e.target.value)}
+            />
+          )}
+
           <br />
           <br />
 
+          {/* Gas Type */}
           <GasDropdown
             value={gasTyp}
             onChange={(e) => setGasTyp(e.target.value)}
           />
+
           <br />
           <br />
 
-          <input
-            type="number"
-            placeholder="Füllstand (kg)"
-            value={fuellstand}
-            onChange={(e) => setFuellstand(e.target.value)}
-          />
+          {/* Füllstand */}
+          {bottleType === "GAS" ? (
+            <select
+              value={fuellstand}
+              onChange={(e) => setFuellstand(e.target.value)}
+            >
+              <option value="">Füllstand wählen</option>
+              <option value="0">0 %</option>
+              <option value="50">50 %</option>
+              <option value="100">100 %</option>
+            </select>
+          ) : (
+            <input
+              type="number"
+              placeholder="Füllstand (kg)"
+              value={fuellstand}
+              onChange={(e) => setFuellstand(e.target.value)}
+            />
+          )}
+
           <br />
           <br />
 
+          {/* Standort */}
           <input
             type="text"
             placeholder="Standort"
             value={standort}
             onChange={(e) => setStandort(e.target.value)}
           />
+
           <br />
           <br />
 
+          {/* Save Button */}
           <button
             type="submit"
             style={{
@@ -143,6 +193,7 @@ const AddBottle = ({ isOpen, onClose, bottles }) => {
 
           <br />
 
+          {/* Close Button */}
           <button
             type="button"
             onClick={() => {

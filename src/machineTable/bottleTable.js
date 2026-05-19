@@ -6,18 +6,24 @@ export default function BottleTable({
   selectedBottle,
   onSelectBottle,
 }) {
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "asc",
+  });
 
   const handleSort = (key) => {
     let direction = "asc";
+
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
+
     setSortConfig({ key, direction });
   };
 
   const sortedBottles = React.useMemo(() => {
     if (!sortConfig.key) return bottles;
+
     return [...bottles].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
@@ -27,6 +33,7 @@ export default function BottleTable({
           ? aValue - bValue
           : bValue - aValue;
       }
+
       return sortConfig.direction === "asc"
         ? String(aValue).localeCompare(String(bValue))
         : String(bValue).localeCompare(String(aValue));
@@ -46,6 +53,7 @@ export default function BottleTable({
                   : "▼"
                 : ""}
             </th>
+
             <th onClick={() => handleSort("gasTyp")}>
               Gas{" "}
               {sortConfig.key === "gasTyp"
@@ -54,6 +62,7 @@ export default function BottleTable({
                   : "▼"
                 : ""}
             </th>
+
             <th onClick={() => handleSort("bottleGrosse")}>
               Grösse{" "}
               {sortConfig.key === "bottleGrosse"
@@ -62,6 +71,7 @@ export default function BottleTable({
                   : "▼"
                 : ""}
             </th>
+
             <th onClick={() => handleSort("fuellstand")}>
               Füllstand{" "}
               {sortConfig.key === "fuellstand"
@@ -81,14 +91,19 @@ export default function BottleTable({
             </th>
           </tr>
         </thead>
+
         <tbody>
           {sortedBottles.map((bottle, idx) => {
             const isSelected = selectedBottle?.id === bottle.id;
+
             const rowClass = isSelected
               ? "selected"
               : idx % 2 === 0
               ? "even"
               : "odd";
+
+            // Check if bottle is Verbrauchsgas
+            const isGasBottle = bottle.bottleType === "GAS";
 
             return (
               <tr
@@ -96,16 +111,29 @@ export default function BottleTable({
                 className={rowClass}
                 onClick={() => onSelectBottle(bottle)}
               >
+                {/* Bottle ID */}
                 <td>
-                  {bottle.id} {bottle.quality === "entsorgen" && "⚠️"}
-                </td>
-                <td>
-                  {bottle.gasTyp} {bottle.quality === "entsorgen" && "⚠️"}
+                  {bottle.id}
+
+                  {bottle.quality === "entsorgen" && " ⚠️"}
+
+                  {bottle.quality === "ruckgeben" && " ↩️"}
                 </td>
 
-                <td>{bottle.bottleGrosse} kg</td>
-                <td>{bottle.fuellstand} kg</td>
+                {/* Gas Type */}
+                <td>{bottle.gasTyp}</td>
 
+                {/* Size */}
+                <td>
+                  {bottle.bottleGrosse} {isGasBottle ? "L" : "kg"}
+                </td>
+
+                {/* Fill Level */}
+                <td>
+                  {bottle.fuellstand} {isGasBottle ? "%" : "kg"}
+                </td>
+
+                {/* Location */}
                 <td>{bottle.standort}</td>
               </tr>
             );

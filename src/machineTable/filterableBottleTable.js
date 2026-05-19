@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import BottleTable from "./bottleTable";
 import FlaschentypFilter from "./flaschentypFilter.js";
-import GasFilter from "./gasFilter"; // new dropdown component
+import GasFilter from "./gasFilter";
+import QualityFilter from "./qualityFilter";
 import PdfCreator from "./pdfCreator";
+
 import "./bottleTable.css";
 
 export default function FilterableBottleTable({
@@ -12,38 +14,55 @@ export default function FilterableBottleTable({
 }) {
   const [flaschentypFilter, setFlaschentypFilter] = useState("");
   const [gasFilter, setGasFilter] = useState("");
-  const [showEntsorgenOnly, setShowEntsorgenOnly] = useState(false);
+  const [qualityFilter, setQualityFilter] = useState("");
 
   // Filter function
   function bottleFilter(bottle) {
-    // If no filters are set, show all bottles
-    if (!flaschentypFilter && !gasFilter) return true;
-
     const bottleTypeMatch =
-      !flaschentypFilter || bottle.bottleType === flaschentypFilter;
-    const gasMatch = !gasFilter || bottle.gasTyp === gasFilter;
+      !flaschentypFilter ||
+      bottle.bottleType === flaschentypFilter;
 
-    return bottleTypeMatch && gasMatch;
+    const gasMatch =
+      !gasFilter || bottle.gasTyp === gasFilter;
+
+    const qualityMatch =
+      !qualityFilter ||
+      bottle.quality === qualityFilter;
+
+    return (
+      bottleTypeMatch &&
+      gasMatch &&
+      qualityMatch
+    );
   }
 
-  const displayedBottles = bottles
-    .filter((bottle) => !showEntsorgenOnly || bottle.quality === "entsorgen")
-    .filter(bottleFilter); // keep your existing filters
+  const displayedBottles = bottles.filter(bottleFilter);
 
   return (
     <div>
       <div className="filter-section">
-        <GasFilter filterQuery={gasFilter} setFilterQuery={setGasFilter} />
+        {/* Gas Filter */}
+        <GasFilter
+          filterQuery={gasFilter}
+          setFilterQuery={setGasFilter}
+        />
 
+        {/* Bottle Type Filter */}
         <FlaschentypFilter
           filterQuery={flaschentypFilter}
           setFilterQuery={setFlaschentypFilter}
         />
-        <button onClick={() => setShowEntsorgenOnly((prev) => !prev)}>
-          {showEntsorgenOnly ? "Show All" : "zu entsorgen"}
-        </button>
+
+        {/* Quality Filter */}
+        <QualityFilter
+          filterQuery={qualityFilter}
+          setFilterQuery={setQualityFilter}
+        />
+
+        {/* PDF Button */}
         <PdfCreator displayedBottles={displayedBottles} />
       </div>
+
       <div className="table-section">
         <BottleTable
           bottles={displayedBottles}

@@ -1,52 +1,113 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
+//import GasDropdown from "../util/gasDropdown";
 import "./popUp.css";
 
-const UpdateFillLevel = ({ isOpen, onClose, selectedBottle }) => {
+const UpdateRec = ({ isOpen, onClose, selectedBottle }) => {
+  const [gasTyp, setGasTyp] = useState("");
+  const [quality, setQuality] = useState("");
   const [added, setAdded] = useState("");
   const [removed, setRemoved] = useState("");
 
-  if (!isOpen || !selectedBottle) return null;
-
-  // ✅ Check if selected bottle is KM
   const isREC = selectedBottle?.bottleType === "REC" || false;
 
-  const resetForm = () => {
-    setAdded("");
-    setRemoved("");
+  useEffect(() => {
+    if (isOpen && selectedBottle) {
+      setGasTyp(selectedBottle.gasTyp || "");
+      setQuality(selectedBottle.quality || "");
+      setAdded("");
+      setRemoved("");
+    }
+  }, [isOpen, selectedBottle]);
+
+  if (!isOpen || !selectedBottle) return null;
+
+  // Handler to mark bottle as "zu entsorgen"
+  const markAsEntsorgen = async () => {
+    const confirm = window.confirm(
+      "Diese Aktion kann nicht rückgängig gemacht werden. Wirklich auf 'zu ruckgeben' setzen?"
+    );
+    if (!confirm) return;
+
+    try {
+      const bottleRef = doc(db, "bottles", selectedBottle.id);
+      await updateDoc(bottleRef, { quality: "ruckgeben" });
+
+      // ✅ Update local state so modal reflects change without closing
+      setQuality("ruckgeben");
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren der Flasche:", error);
+      alert("Fehler beim Aktualisieren. Siehe Konsole.");
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    //if (!gasTyp) {
+    // alert("Bitte füllen Sie das Feld Gastyp aus.");
+    // return;
+    //}
+
     try {
       const bottleRef = doc(db, "bottles", selectedBottle.id);
 
-      const newFuellstand = isREC
-        ? Number(selectedBottle.fuellstand || 0) +
-          Number(added || 0) -
-          Number(removed || 0)
-        : Number(selectedBottle.fuellstand || 0) - Number(removed || 0);
+      const newFuellstand =
+        Number(selectedBottle.fuellstand || 0) +
+        Number(added || 0) -
+        Number(removed || 0);
 
       await updateDoc(bottleRef, {
+        //gasTyp,
         fuellstand: newFuellstand,
       });
 
-      resetForm();
-      onClose();
+      alert(`Flasche ${selectedBottle.id} wurde aktualisiert.`);
+      onClose(); // Only close after saving changes
     } catch (error) {
       console.error("❌ Error updating bottle:", error);
-      alert("Error updating bottle. Check console for details.");
+      alert("Fehler beim Aktualisieren der Flasche. Siehe Konsole.");
     }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <h3>Update Füllstand</h3>
-
+        <h3>Update Flasche {selectedBottle.id}</h3>
+        <p>
+          Gas: {selectedBottle.gasTyp}
+          <br />
+          Füllstand: {selectedBottle.fuellstand}
+        </p>
         <form onSubmit={handleSubmit} style={{ marginTop: "30px" }}>
+          {/* Entsorgen Button or Warning */}
+          {quality !== "ruckgeben" ? (
+            <button
+              type="button"
+              onClick={markAsEntsorgen}
+              style={{
+                backgroundColor: "red",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                width: "100%",
+                marginTop: "10px",
+              }}
+            >
+              Als "zu ruckgeben" ↩️ kennzeichnen
+            </button>
+          ) : (
+            <span style={{ color: "red", fontWeight: "bold" }}>
+              Flasche ist zu ruckgeben ↩️
+            </span>
+          )}
+          <br />
+          <br />
+
           <input
             type="number"
             placeholder="Menge eingefüllt (kg)"
@@ -57,6 +118,7 @@ const UpdateFillLevel = ({ isOpen, onClose, selectedBottle }) => {
           />
           <br />
           <br />
+
           <input
             type="number"
             placeholder="Menge gebraucht (kg)"
@@ -81,15 +143,11 @@ const UpdateFillLevel = ({ isOpen, onClose, selectedBottle }) => {
           >
             Save
           </button>
-
           <br />
 
           <button
             type="button"
-            onClick={() => {
-              resetForm();
-              onClose();
-            }}
+            onClick={onClose}
             style={{
               backgroundColor: "red",
               color: "white",
@@ -110,4 +168,4 @@ const UpdateFillLevel = ({ isOpen, onClose, selectedBottle }) => {
   );
 };
 
-export default UpdateFillLevel;
+export default UpdateRec;
