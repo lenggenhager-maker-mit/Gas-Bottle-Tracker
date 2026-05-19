@@ -38,15 +38,19 @@ const PdfCreator = ({ displayedBottles }) => {
       "Grösse",
       "Füllstand",
       "Standort",
-      "Entsorgen",
+      "Status",
     ];
     const tableRows = displayedBottles.map((bottle) => [
       bottle.id ?? "",
       bottle.gasTyp ?? "",
       bottle.bottleGrosse ?? "",
-      bottle.fuellstand ?? "", // 0 will now display correctly
+      bottle.fuellstand ?? "",
       bottle.standort ?? "",
-      bottle.quality === "entsorgen" ? "Ja" : "",
+      bottle.quality === "entsorgen"
+        ? "entsorgen"
+        : bottle.quality === "ruckgeben"
+        ? "ruckgeben"
+        : "",
     ]);
 
     // Generate table using the imported autoTable function
